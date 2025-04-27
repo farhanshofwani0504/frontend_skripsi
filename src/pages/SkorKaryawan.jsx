@@ -1,91 +1,103 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import EmailModal from "../components/EmailModal";
+import { toast } from "react-toastify";
+import AddKaryawanModal from "../components/AddKaryawanModal";
 
 export default function SkorKaryawan() {
-  const [karyawan, setKaryawan] = useState([]);
+  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedKaryawan, setSelectedKaryawan] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const token = localStorage.getItem("token");
-  const navigate = useNavigate();
+  const [showAdd, setShowAdd] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  /* ------------ fetch list ------------ */
+  const getData = async () => {
+    setLoading(true);
     try {
-      const res = await fetch("http://localhost:3000/api/skor-karyawan", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      setKaryawan(data);
-    } catch (err) {
-      console.error(err);
+      const res = await fetch("http://localhost:3000/api/karyawan");
+      const json = await res.json();
+      setData(json);
+    } catch {
+      toast.error("Gagal memuat data");
     } finally {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    getData();
+  }, []);
 
-  const handleSendEmail = (k) => {
-    setSelectedKaryawan(k);
-    setShowModal(true);
+  /* ------------ hapus ------------- */
+  const handleDelete = async (id) => {
+    if (!window.confirm("Hapus karyawan ini?")) return;
+    try {
+      const res = await fetch(`http://localhost:3000/api/karyawan/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Karyawan dihapus");
+      getData();
+    } catch {
+      toast.error("Gagal hapus");
+    }
   };
 
-  if (loading) return <p>Loading...</p>;
-
-  const getStatus = (skor) => {
-    if (skor >= 4) return "sangat-baik";
-    if (skor >= 2.5) return "perlu-peningkatan";
-    return "peringatan";
-  };
-
+  /* ------------ UI ------------- */
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Skor Karyawan</h2>
+    <div className="space-y-6">
+      {/* bar judul + tombol */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Skor Karyawan</h2>
 
-      <table className="w-full table-auto border-collapse">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="border p-2">Nama</th>
-            <th className="border p-2">Posisi</th>
-            <th className="border p-2">Skor</th>
-            <th className="border p-2">Status</th>
-            <th className="border p-2">Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          {karyawan.map((k) => (
-            <tr key={k.id} className="hover:bg-gray-100">
-              <td className="border p-2">{k.nama}</td>
-              <td className="border p-2">{k.posisi}</td>
-              <td className="border p-2">{k.totalSkor.toFixed(2)}</td>
-              <td className={`border p-2 ${getStatus(k.totalSkor)}`}>
-                {k.totalSkor >= 4
-                  ? "Sangat Baik"
-                  : k.totalSkor >= 2.5
-                  ? "Perlu Ditingkatkan"
-                  : "Warning"}
-              </td>
-              <td className="border p-2">
-                <button
-                  onClick={() => handleSendEmail(k)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                >
-                  Kirim Email
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        <button
+          onClick={() => setShowAdd(true)}
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white
+                     hover:bg-blue-700"
+        >
+          + Tambah Karyawan
+        </button>
+      </div>
 
-      {showModal && selectedKaryawan && (
-        <EmailModal
-          karyawan={selectedKaryawan}
-          onClose={() => setShowModal(false)}
-          refreshData={fetchData}
+      {/* tabel */}
+      {loading ? (
+        <p>Memuat…</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full border text-sm">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="border px-3 py-2">Nama</th>
+                <th className="border px-3 py-2">Posisi</th>
+                <th className="border px-3 py-2">Skor</th>
+                <th className="border px-3 py-2 w-40">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((k) => (
+                <tr key={k.id} className="even:bg-gray-50">
+                  <td className="border px-3 py-2">{k.nama}</td>
+                  <td className="border px-3 py-2">{k.posisi}</td>
+                  <td className="border px-3 py-2 text-center">
+                    {k.skor.toFixed(2)}
+                  </td>
+                  <td className="border px-3 py-2 text-center">
+                    <button
+                      onClick={() => handleDelete(k.id)}
+                      className="rounded bg-red-500 px-3 py-1 text-xs font-semibold text-white
+                                 hover:bg-red-600"
+                    >
+                      Hapus
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* modal tambah */}
+      {showAdd && (
+        <AddKaryawanModal
+          onClose={() => setShowAdd(false)}
+          onSuccess={getData}
         />
       )}
     </div>

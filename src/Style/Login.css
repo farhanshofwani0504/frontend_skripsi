@@ -1,0 +1,15 @@
+/* HANYA blob – pastikan tidak ada karakter lain di file */
+.blob {
+  position: absolute;
+  inset: -5% -5% auto auto; /* top right sedikit keluar */
+  width: 110%;
+  height: 110%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    #3b82f6 0%,
+    #2563eb 60%,
+    #1e3a8a 100%
+  );
+  border-radius: 45% 55% 60% 40% / 55% 45% 55% 45%;
+  transform: rotate(20deg);
+}

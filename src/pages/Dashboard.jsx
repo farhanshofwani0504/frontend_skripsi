@@ -23,7 +23,7 @@ export default function Dashboard() {
 
         {/* Card Kesimpulan Global */}
         <Link
-          to="/dashboard/kesimpulan-global"
+          to="/dashboard/kesimpulan"
           className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition"
         >
           <h2 className="text-xl font-semibold mb-2 text-green-600">

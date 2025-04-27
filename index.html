@@ -1,8 +1,42 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <!-- Tailwind – runtime CDN (v3.4) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+      .center {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+      .panel {
+        max-width: 380px;
+        margin: auto;
+        font-family: Poppins, sans-serif;
+      }
+      .panel input {
+        width: 100%;
+        padding: 10px;
+        margin-top: 6px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+      .panel button {
+        width: 100%;
+        padding: 12px;
+        background: #1e88e5;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        margin-top: 20px;
+      }
+    </style>
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite + React</title>
   </head>
