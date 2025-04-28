@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import logoImg from "../assets/logo1.png";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -46,7 +47,17 @@ export default function Login() {
 
         {/* ——— Panel kanan: form ——— */}
         <section className="flex w-full flex-col justify-center p-10 lg:w-1/2">
-          <h2 className="text-3xl font-semibold">Login</h2>
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-3xl font-semibold">Login</h2>
+
+            {/* logo di kanan judul */}
+            <img
+              src={logoImg}
+              alt="logo"
+              className="h-8 w-auto" /* ubah h-8 ⇒ h-10 jika ingin lebih besar */
+            />
+          </div>
+
           <p className="mb-8 text-sm text-gray-500">
             Welcome back! Please login to your account.
           </p>
