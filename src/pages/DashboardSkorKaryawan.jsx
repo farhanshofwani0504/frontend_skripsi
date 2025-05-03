@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import RowActions from "@/components/RowActions"; // ⬅️  default import
+import CrBadge from "../components/CrBadge";
+import GradeBadge from "../components/GradeBadge";
+import RowActions from "@/components/RowActions";
 import LoadingSpinner from "../components/LoadingSpinner";
 import EmailModal from "../components/EmailModal";
 import AddKaryawanModal from "../components/AddKaryawanModal";
@@ -17,7 +19,7 @@ export default function DashboardSkorKaryawan() {
   const [loading, setLoading] = useState(true);
 
   const [bobotOk, setBobotOk] = useState(true);
-  const [bobotSum, setBobotSum] = useState(null);
+  const [overallCR, setOverallCR] = useState(null);
 
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
@@ -32,24 +34,25 @@ export default function DashboardSkorKaryawan() {
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
-  /* ---------- LOAD RANKING & BOBOT ---------- */
+  /* ---------- LOAD DATA ---------- */
   const fetchData = async () => {
     setLoading(true);
     try {
-      // ranking
-      const res = await fetch("http://localhost:3000/api/ranking", {
+      /* 1. ranking (+ grade & rollingAvg sudah dikirim BE) */
+      const res = await fetch("http://localhost:3000/api/karyawan", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error(`Server error (${res.status})`);
-      setKaryawan(await res.json());
+      const ranking = await res.json();
+      setKaryawan(ranking);
 
-      // bobot
-      const bob = await fetch("http://localhost:3000/api/bobot").then((r) =>
+      /* 2. bobot (buat cek normalisasi & ambil CR) */
+      const bobot = await fetch("http://localhost:3000/api/bobot").then((r) =>
         r.json()
       );
-      const sum = bob.reduce((a, b) => a + b.bobot, 0);
+      const sum = bobot.reduce((a, b) => a + b.bobot, 0);
       setBobotOk(Math.abs(sum - 1) < 0.01);
-      setBobotSum(sum);
+      setOverallCR(bobot[0]?.cr ?? null);
     } catch (err) {
       console.error(err);
       toast.error("Gagal memuat data", { icon: false });
@@ -62,27 +65,16 @@ export default function DashboardSkorKaryawan() {
     fetchData();
   }, [token]);
 
-  /* ---------- UTILS ---------- */
-  const getStatus = (skor) => {
-    if (bobotSum == null) return "-";
-    const min = 1 * bobotSum;
-    const max = 5 * bobotSum;
-    const pct = (skor - min) / (max - min);
-    if (pct >= 0.8) return "Sangat Baik";
-    if (pct >= 0.5) return "Perlu Ditingkatkan";
-    return "Warning";
-  };
-  const getRowColor = (skor) => {
-    if (bobotSum == null) return "";
-    const min = 1 * bobotSum;
-    const max = 5 * bobotSum;
-    const pct = (skor - min) / (max - min);
-    if (pct >= 0.8) return "row-green";
-    if (pct >= 0.5) return "row-yellow";
-    return "row-red";
+  /* ---------- UTIL ---------- */
+  const rowColor = {
+    A: "row-green",
+    B: "row-green",
+    C: "row-yellow",
+    D: "row-red",
+    E: "row-red",
   };
 
-  /* ---------- ACTION HANDLERS ---------- */
+  /* ---------- ACTIONS ---------- */
   const handleSendEmail = (k) => {
     setSelectedKaryawan(k);
     setShowEmailModal(true);
@@ -104,16 +96,21 @@ export default function DashboardSkorKaryawan() {
     }
   };
 
-  /* ---------- RENDER ---------- */
+  /* ---------- UI ---------- */
   if (loading) return <LoadingSpinner />;
 
   return (
     <div className="dashboard-skor-karyawan">
-      <h2>Skor Karyawan</h2>
+      <h2 className="text-xl font-bold mb-3">
+        Dashboard Skor Karyawan{" "}
+        <span className="ml-3">
+          <CrBadge cr={overallCR} />
+        </span>
+      </h2>
 
       {!bobotOk && (
         <p className="text-red-600 text-sm mb-2">
-          Warning: Bobot kriteria belum dinormalisasi (Σ ≠ 1)
+          Warning: Bobot kriteria belum dinormalisasi (Σ ≠ 1)
         </p>
       )}
 
@@ -134,18 +131,18 @@ export default function DashboardSkorKaryawan() {
             <tr>
               <th>Nama</th>
               <th>Posisi</th>
-              <th>Skor</th>
-              <th>Status</th>
+              <th>Grade (3 bulan)</th>
               <th>Aksi</th>
             </tr>
           </thead>
           <tbody>
             {karyawan.map((k) => (
-              <tr key={k.id} className={getRowColor(k.totalSkor)}>
+              <tr key={k.id} className={rowColor[k.grade]}>
                 <td>{k.nama}</td>
                 <td>{k.posisi}</td>
-                <td>{k.totalSkor.toFixed(2)}</td>
-                <td>{getStatus(k.totalSkor)}</td>
+                <td className="text-center">
+                  <GradeBadge grade={k.grade} avg={k.rollingAvg} />
+                </td>
                 <td className="text-center">
                   <RowActions
                     k={k}
@@ -169,6 +166,15 @@ export default function DashboardSkorKaryawan() {
           </tbody>
         </table>
       </div>
+
+      {/* LEGEND */}
+      <footer className="mt-4 text-sm text-gray-600">
+        Legend: <span className="font-bold text-green-600">A</span> Excellent •{" "}
+        <span className="font-bold text-blue-600">B</span> Good •{" "}
+        <span className="font-bold text-yellow-600">C</span> Fair •{" "}
+        <span className="font-bold text-orange-600">D</span> Poor •{" "}
+        <span className="font-bold text-red-600">E</span> Critical
+      </footer>
 
       {/* MODALS */}
       {showEmailModal && selectedKaryawan && (
