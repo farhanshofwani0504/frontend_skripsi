@@ -1,9 +1,18 @@
 import { useState } from "react";
-import { toast } from "react-toastify"; // ⬅️ toastify
-import "react-toastify/dist/ReactToastify.css"; // sekali saja (bisa di root)
+import { toast } from "react-toastify"; // ⬅️ tambahkan
+import "react-toastify/dist/ReactToastify.css"; // ⬅️ sekali saja, di mana pun
 
-export default function AddKaryawanModal({ onClose, onSuccess, token }) {
-  const [form, setForm] = useState({ nama: "", posisi: "", email: "" });
+export default function EditKaryawanModal({
+  karyawan,
+  token,
+  onClose,
+  onSuccess,
+}) {
+  const [form, setForm] = useState({
+    nama: karyawan.nama,
+    posisi: karyawan.posisi,
+    email: karyawan.email ?? "",
+  });
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) =>
@@ -13,23 +22,26 @@ export default function AddKaryawanModal({ onClose, onSuccess, token }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3000/api/karyawan", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(form),
-      });
+      const res = await fetch(
+        `http://localhost:3000/api/karyawan/${karyawan.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(form),
+        }
+      );
 
-      if (!res.ok) throw new Error("Gagal menambah karyawan");
+      if (!res.ok) throw new Error("Gagal update karyawan");
 
-      toast.success("✅  Karyawan berhasil ditambahkan", { icon: false });
+      toast.success("  Data karyawan berhasil di‑update");
       onSuccess(); // refresh list di dashboard
       onClose();
     } catch (err) {
       console.error(err);
-      toast.error(err.message || "Gagal menambah karyawan", { icon: false });
+      toast.error(err.message || "Gagal update karyawan");
     } finally {
       setLoading(false);
     }
@@ -38,7 +50,7 @@ export default function AddKaryawanModal({ onClose, onSuccess, token }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded w-80">
-        <h3 className="text-lg font-semibold mb-4">Tambah Karyawan</h3>
+        <h3 className="text-lg font-semibold mb-4">Edit Karyawan</h3>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           {["nama", "posisi", "email"].map((f) => (
