@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import EmailImg from "../assets/email-illustration.svg"; // ⬅️ import ilustrasi
+import EmailImg from "../assets/email-illustration.svg";
 import "../Style/EmailModal.css";
 
 export default function EmailModal({
@@ -11,12 +11,15 @@ export default function EmailModal({
   const [sending, setSending] = useState(false);
   const token = localStorage.getItem("token");
 
-  const getStatus = (skor) => {
-    if (skor >= 4) return "sangat-baik";
-    if (skor >= 2.5) return "perlu-peningkatan";
-    return "peringatan";
-  };
-  const status = getStatus(karyawan.totalSkor);
+  // Gunakan grade dari karyawan langsung
+  const grade = karyawan.grade || "N/A";
+
+  const status =
+    grade === "A"
+      ? "sangat-baik"
+      : ["B", "C"].includes(grade)
+      ? "perlu-peningkatan"
+      : "peringatan";
 
   const opsi = {
     "sangat-baik": [{ key: "pujian", label: "Pujian", cls: "chip-green" }],
@@ -54,10 +57,10 @@ export default function EmailModal({
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-        {/* —— ilustrasi —— */}
-
         <h3 className="modal-title">Kirim email ke {karyawan.nama}</h3>
-        <p className="modal-sub">Pilih jenis email:</p>
+        <p className="modal-sub">
+          Grade performa: <strong>{grade}</strong>
+        </p>
         <img
           src={EmailImg}
           alt="Email illustration"
