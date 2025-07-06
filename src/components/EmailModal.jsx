@@ -9,6 +9,7 @@ export default function EmailModal({
 }) {
   const [jenisEmail, setJenisEmail] = useState("");
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
   const token = localStorage.getItem("token");
 
   // Gunakan grade dari karyawan langsung
@@ -29,13 +30,17 @@ export default function EmailModal({
     peringatan: [{ key: "peringatan", label: "Peringatan", cls: "chip-red" }],
   }[status];
 
-  useEffect(() => setJenisEmail(""), [karyawan]);
+  useEffect(() => {
+    setJenisEmail("");
+    setError("");
+  }, [karyawan]);
 
   const handleKirim = async () => {
     try {
       if (!jenisEmail) return;
       setSending(true);
-      await fetch("http://localhost:3000/api/notifikasi/kirim-email-karyawan", {
+      setError("");
+      const res = await fetch("http://localhost:3000/api/notifikasi/kirim-email-karyawan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -43,11 +48,16 @@ export default function EmailModal({
         },
         body: JSON.stringify({ karyawanId: karyawan.id, jenisEmail }),
       });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Gagal mengirim email.");
+        return;
+      }
       alert("Email berhasil dikirim!");
       refreshData();
       onClose();
     } catch (err) {
-      alert("Gagal mengirim email.");
+      setError("Gagal mengirim email.");
       console.error(err);
     } finally {
       setSending(false);
@@ -80,6 +90,10 @@ export default function EmailModal({
             </button>
           ))}
         </div>
+
+        {error && (
+          <div className="text-red-600 text-sm text-center mt-3">{error}</div>
+        )}
 
         <div className="modal-footer">
           <button className="btn-secondary" onClick={onClose}>

@@ -27,7 +27,7 @@ export default function RowActions({ k, onActions }) {
           Penilaian
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onActions.email(k)}>
-          Kirim Email
+          Kirim Email
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
@@ -46,6 +46,9 @@ export default function RowActions({ k, onActions }) {
 
         <DropdownMenuItem onClick={() => onActions.rekap(k)}>
           Rekap
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onActions.downloadPdf(k)}>
+          Download PDF
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -2,6 +2,17 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Bar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 import CrBadge from "../components/CrBadge";
 import GradeBadge from "../components/GradeBadge";
@@ -99,10 +110,50 @@ export default function DashboardSkorKaryawan() {
   /* ---------- UI ---------- */
   if (loading) return <LoadingSpinner />;
 
+  // Helper: data untuk bar chart rata-rata nilai
+  const barChartData = {
+    labels: karyawan.map((k) => k.nama),
+    datasets: [
+      {
+        label: "Rata-rata Nilai",
+        data: karyawan.map((k) => k.rollingAvg ?? 0),
+        backgroundColor: "#2563eb",
+        borderRadius: 6,
+        maxBarThickness: 40,
+      },
+    ],
+  };
+  const barChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      title: {
+        display: true,
+        text: "Rata-rata Nilai Tiap Karyawan",
+        font: { size: 18 },
+      },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => `Nilai: ${ctx.parsed.y}`,
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 5,
+        title: { display: true, text: "Nilai" },
+      },
+      x: {
+        title: { display: true, text: "Nama Karyawan" },
+      },
+    },
+  };
+
   return (
     <div className="dashboard-skor-karyawan">
       <h2 className="text-xl font-bold mb-3">
-        Dashboard Skor Karyawan{" "}
+        Dashboard Skor Karyawan
         <span className="ml-3">
           <CrBadge cr={overallCR} />
         </span>
@@ -110,7 +161,7 @@ export default function DashboardSkorKaryawan() {
 
       {!bobotOk && (
         <p className="text-red-600 text-sm mb-2">
-          Warning: Bobot kriteria belum dinormalisasi (Σ ≠ 1)
+          Warning: Bobot kriteria belum dinormalisasi (Σ ≠ 1)
         </p>
       )}
 
@@ -120,8 +171,17 @@ export default function DashboardSkorKaryawan() {
           onClick={() => setShowAdd(true)}
           className="bg-green-600 text-white px-3 py-1 rounded"
         >
-          + Tambah Karyawan
+          + Tambah Karyawan
         </button>
+      </div>
+
+      {/* BAR CHART */}
+      <div className="mb-8">
+        {karyawan.length === 0 ? (
+          <div className="text-center text-gray-500">Belum ada data karyawan.</div>
+        ) : (
+          <Bar data={barChartData} options={barChartOptions} height={80} />
+        )}
       </div>
 
       {/* TABLE */}
@@ -131,7 +191,7 @@ export default function DashboardSkorKaryawan() {
             <tr>
               <th>Nama</th>
               <th>Posisi</th>
-              <th>Grade (3 bulan)</th>
+              <th>Grade (3 bulan)</th>
               <th>Aksi</th>
             </tr>
           </thead>
@@ -157,6 +217,25 @@ export default function DashboardSkorKaryawan() {
                       rekap: () => {
                         setRecapTarget(k);
                         setShowRecap(true);
+                      },
+                      downloadPdf: async () => {
+                        try {
+                          const res = await fetch(`http://localhost:3000/api/karyawan/${k.id}/report`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                          });
+                          if (!res.ok) throw new Error('Gagal download PDF');
+                          const blob = await res.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `Laporan_Kinerja_${k.nama.replace(/ /g, "_")}.pdf`;
+                          document.body.appendChild(a);
+                          a.click();
+                          a.remove();
+                          window.URL.revokeObjectURL(url);
+                        } catch (err) {
+                          toast.error(err.message || 'Gagal download PDF');
+                        }
                       },
                     }}
                   />
