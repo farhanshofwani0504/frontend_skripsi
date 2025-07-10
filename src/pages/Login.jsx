@@ -26,6 +26,9 @@ export default function Login() {
       if (!res.ok) throw new Error(data.error || "Gagal login");
 
       localStorage.setItem("token", data.token);
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
       toast.success("Login berhasil!");
       navigate("/dashboard", { replace: true });
     } catch (err) {

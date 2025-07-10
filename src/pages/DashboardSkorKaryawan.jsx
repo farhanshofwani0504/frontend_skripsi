@@ -18,11 +18,8 @@ import CrBadge from "../components/CrBadge";
 import GradeBadge from "../components/GradeBadge";
 import RowActions from "@/components/RowActions";
 import LoadingSpinner from "../components/LoadingSpinner";
-import EmailModal from "../components/EmailModal";
-import AddKaryawanModal from "../components/AddKaryawanModal";
-import EditKaryawanModal from "../components/EditKaryawanModal";
-import RecapModal from "../components/RecapModal";
 import "../Style/DashboardSkorKaryawan.css";
+import { useRef } from "react";
 
 export default function DashboardSkorKaryawan() {
   /* ---------- STATE ---------- */
@@ -33,14 +30,9 @@ export default function DashboardSkorKaryawan() {
   const [overallCR, setOverallCR] = useState(null);
 
   const [showAdd, setShowAdd] = useState(false);
-  const [showEdit, setShowEdit] = useState(false);
-  const [editTarget, setEditTarget] = useState(null);
-
-  const [showRecap, setShowRecap] = useState(false);
-  const [recapTarget, setRecapTarget] = useState(null);
-
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [selectedKaryawan, setSelectedKaryawan] = useState(null);
+  const [importResult, setImportResult] = useState(null);
+  const [importType, setImportType] = useState(null); // 'karyawan' | 'nilai'
+  const fileInputRef = useRef();
 
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
@@ -76,6 +68,19 @@ export default function DashboardSkorKaryawan() {
     fetchData();
   }, [token]);
 
+  useEffect(() => {
+    // DEBUG: Cek struktur data endpoint penilaian
+    const token = localStorage.getItem("token");
+    fetch("http://localhost:3000/api/karyawan/1/penilaian", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("[DEBUG] /karyawan/1/penilaian", data);
+      })
+      .catch((err) => console.error("[DEBUG] error penilaian", err));
+  }, []);
+
   /* ---------- UTIL ---------- */
   const rowColor = {
     A: "row-green",
@@ -85,75 +90,47 @@ export default function DashboardSkorKaryawan() {
     E: "row-red",
   };
 
-  /* ---------- ACTIONS ---------- */
-  const handleSendEmail = (k) => {
-    setSelectedKaryawan(k);
-    setShowEmailModal(true);
+  const handleOpenImport = (type) => {
+    setImportType(type);
+    setImportResult(null);
+    fileInputRef.current.value = null;
+    fileInputRef.current.click();
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Yakin hapus karyawan?")) return;
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("file", file);
+    const endpoint = importType === "karyawan"
+      ? "http://localhost:3000/api/karyawan/import-csv-karyawan"
+      : "http://localhost:3000/api/karyawan/import-csv-nilai";
     try {
-      const res = await fetch(`http://localhost:3000/api/karyawan/${id}`, {
-        method: "DELETE",
+      const res = await fetch(endpoint, {
+        method: "POST",
         headers: { Authorization: `Bearer ${token}` },
+        body: formData,
       });
-      if (!res.ok) throw new Error("Gagal menghapus karyawan");
-      toast.success("✅  Karyawan berhasil dihapus", { icon: false });
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      toast.error(err.message, { icon: false });
+      const data = await res.json();
+      setImportResult(data);
+      if (importType === "karyawan") fetchData();
+      toast.success("Import berhasil!");
+    } catch {
+      setImportResult({ error: "Gagal import" });
+      toast.error("Gagal import");
     }
   };
+
+  /* ---------- ACTIONS ---------- */
 
   /* ---------- UI ---------- */
   if (loading) return <LoadingSpinner />;
 
-  // Helper: data untuk bar chart rata-rata nilai
-  const barChartData = {
-    labels: karyawan.map((k) => k.nama),
-    datasets: [
-      {
-        label: "Rata-rata Nilai",
-        data: karyawan.map((k) => k.rollingAvg ?? 0),
-        backgroundColor: "#2563eb",
-        borderRadius: 6,
-        maxBarThickness: 40,
-      },
-    ],
-  };
-  const barChartOptions = {
-    responsive: true,
-    plugins: {
-      legend: { display: false },
-      title: {
-        display: true,
-        text: "Rata-rata Nilai Tiap Karyawan",
-        font: { size: 18 },
-      },
-      tooltip: {
-        callbacks: {
-          label: (ctx) => `Nilai: ${ctx.parsed.y}`,
-        },
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        max: 5,
-        title: { display: true, text: "Nilai" },
-      },
-      x: {
-        title: { display: true, text: "Nama Karyawan" },
-      },
-    },
-  };
-
   return (
     <div className="dashboard-skor-karyawan">
+      <button onClick={() => navigate(-1)} className="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">&larr; Kembali</button>
       <h2 className="text-xl font-bold mb-3">
-        Dashboard Skor Karyawan
+        Daftar Karyawan
         <span className="ml-3">
           <CrBadge cr={overallCR} />
         </span>
@@ -175,14 +152,41 @@ export default function DashboardSkorKaryawan() {
         </button>
       </div>
 
-      {/* BAR CHART */}
-      <div className="mb-8">
-        {karyawan.length === 0 ? (
-          <div className="text-center text-gray-500">Belum ada data karyawan.</div>
-        ) : (
-          <Bar data={barChartData} options={barChartOptions} height={80} />
-        )}
+      {/* IMPORT BUTTONS */}
+      <div className="flex gap-2 mb-4">
+        <button
+          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+          onClick={() => handleOpenImport("karyawan")}
+        >
+          Upload CSV Karyawan
+        </button>
+        <button
+          className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded"
+          onClick={() => handleOpenImport("nilai")}
+        >
+          Upload CSV Nilai
+        </button>
+        <input
+          type="file"
+          accept=".csv"
+          ref={fileInputRef}
+          onChange={handleImport}
+          style={{ display: "none" }}
+        />
       </div>
+      {/* IMPORT RESULT */}
+      {importResult && (
+        <div className="mb-4 p-3 bg-gray-100 rounded border">
+          {importResult.error ? (
+            <div className="text-red-600 font-semibold">{importResult.error}</div>
+          ) : (
+            <>
+              <div className="font-semibold mb-1">Hasil Import:</div>
+              <pre className="text-xs whitespace-pre-wrap">{JSON.stringify(importResult, null, 2)}</pre>
+            </>
+          )}
+        </div>
+      )}
 
       {/* TABLE */}
       <div className="table-container">
@@ -204,41 +208,12 @@ export default function DashboardSkorKaryawan() {
                   <GradeBadge grade={k.grade} avg={k.rollingAvg} />
                 </td>
                 <td className="text-center">
-                  <RowActions
-                    k={k}
-                    onActions={{
-                      penilaian: () => navigate(`/dashboard/penilaian/${k.id}`),
-                      email: handleSendEmail,
-                      edit: () => {
-                        setEditTarget(k);
-                        setShowEdit(true);
-                      },
-                      delete: () => handleDelete(k.id),
-                      rekap: () => {
-                        setRecapTarget(k);
-                        setShowRecap(true);
-                      },
-                      downloadPdf: async () => {
-                        try {
-                          const res = await fetch(`http://localhost:3000/api/karyawan/${k.id}/report`, {
-                            headers: { Authorization: `Bearer ${token}` },
-                          });
-                          if (!res.ok) throw new Error('Gagal download PDF');
-                          const blob = await res.blob();
-                          const url = window.URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `Laporan_Kinerja_${k.nama.replace(/ /g, "_")}.pdf`;
-                          document.body.appendChild(a);
-                          a.click();
-                          a.remove();
-                          window.URL.revokeObjectURL(url);
-                        } catch (err) {
-                          toast.error(err.message || 'Gagal download PDF');
-                        }
-                      },
-                    }}
-                  />
+                  <button
+                    className="ml-2 bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
+                    onClick={() => navigate(`/dashboard/karyawan/${k.id}`)}
+                  >
+                    Detail
+                  </button>
                 </td>
               </tr>
             ))}
@@ -256,33 +231,11 @@ export default function DashboardSkorKaryawan() {
       </footer>
 
       {/* MODALS */}
-      {showEmailModal && selectedKaryawan && (
-        <EmailModal
-          karyawan={selectedKaryawan}
-          onClose={() => setShowEmailModal(false)}
-          refreshData={fetchData}
-        />
-      )}
       {showAdd && (
         <AddKaryawanModal
           token={token}
           onClose={() => setShowAdd(false)}
           onSuccess={fetchData}
-        />
-      )}
-      {showEdit && editTarget && (
-        <EditKaryawanModal
-          karyawan={editTarget}
-          token={token}
-          onClose={() => setShowEdit(false)}
-          onSuccess={fetchData}
-        />
-      )}
-      {showRecap && recapTarget && (
-        <RecapModal
-          karyawan={recapTarget}
-          token={token}
-          onClose={() => setShowRecap(false)}
         />
       )}
     </div>

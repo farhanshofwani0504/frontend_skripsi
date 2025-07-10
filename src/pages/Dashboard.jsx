@@ -1,21 +1,23 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Bar } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
 } from "chart.js";
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 export default function Dashboard() {
   const [karyawan, setKaryawan] = useState([]);
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,19 +38,22 @@ export default function Dashboard() {
     fetchData();
   }, [token]);
 
-  const barChartData = {
+  const lineChartData = {
     labels: karyawan.map((k) => k.nama),
     datasets: [
       {
         label: "Rata-rata Nilai",
         data: karyawan.map((k) => k.rollingAvg ?? 0),
-        backgroundColor: "#2563eb",
-        borderRadius: 6,
-        maxBarThickness: 40,
+        borderColor: "#2563eb", // biru
+        backgroundColor: "rgba(37,99,235,0.2)",
+        pointBackgroundColor: "#2563eb",
+        pointBorderColor: "#2563eb",
+        tension: 0.3,
+        fill: false,
       },
     ],
   };
-  const barChartOptions = {
+  const lineChartOptions = {
     responsive: true,
     plugins: {
       legend: { display: false },
@@ -71,66 +76,116 @@ export default function Dashboard() {
       },
       x: {
         title: { display: true, text: "Nama Karyawan" },
+        ticks: { display: false }, // Sembunyikan label nama
+        grid: { display: true },
       },
     },
   };
 
+  // State page per grade
+  const [gradePages, setGradePages] = useState({ A: 0, B: 0, C: 0, D: 0, E: 0 });
+  const pageSize = 5;
+  // Helper: filter dan ambil 5 karyawan per grade sesuai page
+  const getPagedByGrade = (grade) => {
+    const filtered = karyawan
+      .filter((k) => k.grade === grade)
+      .sort((a, b) => (b.rollingAvg ?? 0) - (a.rollingAvg ?? 0));
+    const page = gradePages[grade] || 0;
+    return filtered.slice(page * pageSize, (page + 1) * pageSize);
+  };
+  const getTotalData = (grade) => karyawan.filter((k) => k.grade === grade).length;
+  const grades = ["A", "B", "C", "D", "E"];
+
   return (
-    <div className="min-h-screen p-6 bg-gray-50 flex flex-col items-center">
+    <div className="w-full max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">
         Dashboard HRD System
       </h1>
 
-      {/* BAR CHART */}
-      <div className="mb-8 w-full max-w-5xl min-h-[250px]">
+      {/* LINE CHART */}
+      <div className="mb-8 w-full min-h-[250px]">
         {loading ? (
           <div className="text-center text-gray-500">Memuat data…</div>
         ) : karyawan.length === 0 ? (
           <div className="text-center text-gray-500">Belum ada data karyawan.</div>
         ) : (
-          <Bar data={barChartData} options={barChartOptions} />
+          <Line data={lineChartData} options={lineChartOptions} />
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
-        {/* Card Skor Karyawan */}
-        <Link
-          to="/dashboard/skor-karyawan"
-          className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition"
-        >
-          <h2 className="text-xl font-semibold mb-2 text-blue-600">
-            📋 Skor Karyawan
-          </h2>
-          <p className="text-gray-600">
-            Lihat dan analisa skor penilaian seluruh karyawan.
-          </p>
-        </Link>
-
-        {/* Card Kesimpulan Global */}
-        <Link
-          to="/dashboard/kesimpulan"
-          className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition"
-        >
-          <h2 className="text-xl font-semibold mb-2 text-green-600">
-            📊 Kesimpulan Global
-          </h2>
-          <p className="text-gray-600">
-            Ringkasan kinerja keseluruhan berdasarkan kriteria yang ada.
-          </p>
-        </Link>
-
-        {/* Card Notifikasi Warning */}
-        <Link
-          to="/dashboard/notifikasi"
-          className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition"
-        >
-          <h2 className="text-xl font-semibold mb-2 text-red-600">
-            📩 Notifikasi Warning
-          </h2>
-          <p className="text-gray-600">
-            Kirim email peringatan untuk karyawan dengan skor rendah.
-          </p>
-        </Link>
+      {/* TABEL PER GRADE */}
+      <div className="w-full flex flex-col gap-6 mt-8 mx-auto">
+        {grades.map((g) => {
+          const list = getPagedByGrade(g);
+          const totalData = getTotalData(g);
+          const page = gradePages[g] || 0;
+          return (
+            <div key={g} className="bg-white rounded-lg shadow p-4">
+              <h3 className={`font-bold text-lg mb-2 text-center ${
+                g === "A"
+                  ? "text-green-600"
+                  : g === "B"
+                  ? "text-blue-600"
+                  : g === "C"
+                  ? "text-yellow-600"
+                  : g === "D"
+                  ? "text-orange-600"
+                  : "text-red-600"
+              }`}>Grade {g}</h3>
+              <table className="w-full text-sm border table-fixed">
+                <thead>
+                  <tr>
+                    <th className="border px-2 py-1 w-1/5">Nama</th>
+                    <th className="border px-2 py-1 w-2/5">Posisi</th>
+                    <th className="border px-2 py-1 w-1/6">Nilai</th>
+                    <th className="border px-2 py-1 w-1/6">Grade</th>
+                    <th className="border px-2 py-1 w-1/6">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {totalData === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="text-center text-gray-400 py-2">Tidak ada data</td>
+                    </tr>
+                  ) : (
+                    list.map((k) => (
+                      <tr key={k.id}>
+                        <td className="border px-2 py-1">{k.nama}</td>
+                        <td className="border px-2 py-1">{k.posisi}</td>
+                        <td className="border px-2 py-1 text-center">{k.rollingAvg?.toFixed(2) ?? '-'}</td>
+                        <td className="border px-2 py-1 text-center">{k.grade}</td>
+                        <td className="border px-2 py-1 text-center">
+                          <button
+                            className="ml-2 bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
+                            onClick={() => navigate(`/dashboard/karyawan/${k.id}`)}
+                          >
+                            Detail
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+              <div className="flex justify-end gap-2 mt-2">
+                <button
+                  className="px-3 py-1 bg-gray-300 text-gray-700 rounded disabled:opacity-50"
+                  onClick={() => setGradePages((prev) => ({ ...prev, [g]: page - 1 }))}
+                  disabled={page === 0}
+                >
+                  Back
+                </button>
+                <button
+                  className="px-3 py-1 bg-blue-600 text-white rounded disabled:opacity-50"
+                  onClick={() => setGradePages((prev) => ({ ...prev, [g]: page + 1 }))}
+                  disabled={(page + 1) * pageSize >= totalData}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

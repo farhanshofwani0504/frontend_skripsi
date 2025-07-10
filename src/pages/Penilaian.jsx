@@ -77,13 +77,13 @@ export default function Penilaian() {
               karyawanId: Number(id),
               kriteriaId: p.kriteriaId,
               nilai: p.nilai,
-              bulan, // ← kirim bulan
+              bulan,
             }),
           })
         )
       );
       toast.success(
-        `Penilaian bulan ${dayjs(bulan).format("MMM YYYY")} tersimpan`
+        `Penilaian bulan ${dayjs(bulan).format('MMM YYYY')} tersimpan`
       );
       navigate("/dashboard/skor-karyawan");
     } catch (err) {
@@ -96,6 +96,7 @@ export default function Penilaian() {
 
   return (
     <div className="max-w-md mx-auto p-4 space-y-4">
+      <button onClick={() => navigate(-1)} className="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">&larr; Kembali</button>
       <h2 className="text-lg font-semibold">
         Penilaian: {karyawan?.nama ?? "-"}
       </h2>
@@ -110,7 +111,7 @@ export default function Penilaian() {
         >
           {months.map((m) => (
             <option key={m} value={m}>
-              {dayjs(m).format("MMMM YYYY")}
+              {dayjs(m).format('MMMM YYYY')}
             </option>
           ))}
         </select>

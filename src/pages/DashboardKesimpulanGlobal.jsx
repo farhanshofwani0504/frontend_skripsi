@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useNavigate } from "react-router-dom";
 
 
 export default function DashboardKesimpulanGlobal() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -30,6 +32,7 @@ export default function DashboardKesimpulanGlobal() {
 
   return (
     <div className="p-6">
+      <button onClick={() => navigate(-1)} className="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">&larr; Kembali</button>
       <h2 className="text-2xl font-bold mb-4">Kesimpulan Global</h2>
 
       {/* Kesimpulan Utama */}

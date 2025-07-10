@@ -1,13 +1,11 @@
 import { Outlet } from "react-router-dom";
-import Navbar from "./Navbar";
+import Sidebar from "./Sidebar";
 
 export default function Layout({ children }) {
   return (
     <>
-      <Navbar />
-
-      {/* konten halaman */}
-      <main className="min-h-screen bg-gray-100 px-4 md:px-6 py-8">
+      <Sidebar />
+      <main className="min-h-screen bg-gray-100 px-4 md:px-6 py-8 ml-64">
         {children ? children : <Outlet />}
       </main>
     </>

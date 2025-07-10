@@ -13,9 +13,9 @@ import Penilaian from "./pages/Penilaian";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
-import Notifikasi from "./pages/Notifikasi";
 import Dashboard from "./pages/Dashboard";
 import ForgotPassword from "./pages/ForgotPassword";
+import DetailKaryawan from "./pages/DetailKaryawan";
 
 export default function App() {
   return (
@@ -60,11 +60,11 @@ export default function App() {
         />
 
         <Route
-          path="/dashboard/notifikasi/"
+          path="/dashboard/karyawan/:id"
           element={
             <ProtectedRoute>
               <Layout>
-                <Notifikasi />
+                <DetailKaryawan />
               </Layout>
             </ProtectedRoute>
           }
