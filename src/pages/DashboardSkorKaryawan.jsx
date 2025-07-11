@@ -20,6 +20,7 @@ import RowActions from "@/components/RowActions";
 import LoadingSpinner from "../components/LoadingSpinner";
 import "../Style/DashboardSkorKaryawan.css";
 import { useRef } from "react";
+import AddKaryawanModal from "../components/AddKaryawanModal";
 
 export default function DashboardSkorKaryawan() {
   /* ---------- STATE ---------- */
