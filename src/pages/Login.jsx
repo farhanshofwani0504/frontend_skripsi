@@ -167,16 +167,6 @@ export default function Login() {
               {loading ? "Loading..." : "Login"}
             </button>
           </form>
-
-          <p className="mt-6 text-center text-sm">
-            New user?{" "}
-            <Link
-              to="/register"
-              className="font-medium text-blue-600 hover:underline"
-            >
-              Signup
-            </Link>
-          </p>
         </section>
       </div>
       <div className="center">

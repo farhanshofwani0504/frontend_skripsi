@@ -15,6 +15,12 @@ export default function Sidebar() {
     { to: "/dashboard/skor-karyawan", label: "Daftar Karyawan" },
     { to: "/dashboard/kesimpulan", label: "Kesimpulan Global" },
   ];
+  if (user && user.role && ["admin","owner"].includes(user.role.toLowerCase())) {
+    nav.push({ to: "/dashboard/proposal", label: "Proposal Kontrak" });
+  }
+  if (user && user.role && user.role.toLowerCase() === "admin") {
+    nav.push({ to: "/dashboard/users", label: "Manajemen User" });
+  }
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -32,6 +38,9 @@ export default function Sidebar() {
           <>
             <div className="font-semibold text-gray-800">{user.nama || user.username || user.name || "-"}</div>
             <div className="text-xs text-gray-500">{user.email || "-"}</div>
+            {user.role && (
+              <div className="text-xs font-bold text-blue-700 mt-1">{user.role.toUpperCase()}</div>
+            )}
           </>
         ) : (
           <div className="text-red-500 text-sm">User tidak ditemukan</div>

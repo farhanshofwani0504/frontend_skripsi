@@ -6,6 +6,8 @@ export default function SkorKaryawan() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const isAdmin = user && user.role && user.role.toUpperCase() === "ADMIN";
 
   /* ------------ fetch list ------------ */
   const getData = async () => {
@@ -45,14 +47,14 @@ export default function SkorKaryawan() {
       {/* bar judul + tombol */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Skor Karyawan</h2>
-
-        <button
-          onClick={() => setShowAdd(true)}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white
-                     hover:bg-blue-700"
-        >
-          + Tambah Karyawan
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setShowAdd(true)}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            + Tambah Karyawan
+          </button>
+        )}
       </div>
 
       {/* tabel */}
@@ -94,7 +96,7 @@ export default function SkorKaryawan() {
       )}
 
       {/* modal tambah */}
-      {showAdd && (
+      {isAdmin && showAdd && (
         <AddKaryawanModal
           onClose={() => setShowAdd(false)}
           onSuccess={getData}

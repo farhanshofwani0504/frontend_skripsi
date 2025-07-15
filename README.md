@@ -1,12 +1,61 @@
-# React + Vite
+# HRD System Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplikasi HRD System berbasis React untuk manajemen karyawan, user, dan proposal kontrak dengan role-based access (ADMIN/OWNER).
 
-Currently, two official plugins are available:
+## Fitur Utama
+- **Login & Role-based Access**: Hanya user dengan role ADMIN/OWNER yang dapat login dan mengakses fitur sesuai haknya.
+- **Manajemen User** (khusus ADMIN):
+  - Lihat, tambah, edit, hapus user (role: ADMIN/OWNER)
+- **Manajemen Karyawan**:
+  - Lihat daftar karyawan
+  - Tambah, edit, hapus karyawan (khusus ADMIN)
+  - Penilaian karyawan (khusus ADMIN)
+- **Proposal Kontrak**:
+  - ADMIN: Buat proposal perpanjangan/pemutusan kontrak
+  - ADMIN/OWNER: Lihat dan filter daftar proposal, detail proposal
+  - OWNER: Approve/Reject proposal dengan catatan
+- **Import Data**: Upload CSV karyawan/nilai (khusus ADMIN)
+- **Notifikasi Reset Password**: User request reset, admin proses manual
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Struktur Folder
+- `src/pages/` — Halaman utama (Dashboard, UserManagement, SkorKaryawan, ProposalList, ProposalDetail, dsb)
+- `src/components/` — Komponen UI (Sidebar, Navbar, Modal, dsb)
+- `src/assets/` — Gambar/logo
+- `public/` — File statis
 
-## Expanding the ESLint configuration
+## Instalasi & Setup
+1. **Clone repo**
+   ```bash
+   git clone <repo-url>
+   cd frontend_skripsi
+   ```
+2. **Install dependencies**
+   ```bash
+   yarn install
+   # atau
+   npm install
+   ```
+3. **Jalankan development server**
+   ```bash
+   yarn dev
+   # atau
+   npm run dev
+   ```
+4. **Environment**
+   - Pastikan backend berjalan di `http://localhost:3000`
+   - Ubah endpoint di frontend jika backend berbeda
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Penggunaan
+- Login menggunakan akun ADMIN/OWNER
+- Navigasi melalui sidebar
+- Fitur hanya muncul sesuai role:
+  - ADMIN: Semua fitur user, karyawan, proposal, import
+  - OWNER: Lihat data, approve/reject proposal
+
+## Catatan
+- Semua endpoint API sudah menggunakan auth dan roleMiddleware
+- Untuk reset password, user request dan admin proses manual
+
+---
+
+**By Tim Skripsi HRD System**

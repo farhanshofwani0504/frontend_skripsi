@@ -17,6 +17,8 @@ export default function DetailKaryawan() {
   const [reviewResult, setReviewResult] = useState(null);
   const [pemecatanResult, setPemecatanResult] = useState(null);
   const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const isAdmin = user && user.role && user.role.toUpperCase() === "ADMIN";
 
   const refreshData = () => {
     setLoading(true);
@@ -113,18 +115,24 @@ export default function DetailKaryawan() {
         <div><b>Posisi:</b> {data.posisi}</div>
       </div>
       <div className="flex flex-wrap gap-2 mb-6">
-        <button className="bg-blue-600 text-white px-3 py-1 rounded" onClick={() => navigate(`/dashboard/penilaian/${id}`)}>Penilaian</button>
+        {isAdmin && (
+          <>
+            <button className="bg-blue-600 text-white px-3 py-1 rounded" onClick={() => navigate(`/dashboard/penilaian/${id}`)}>Penilaian</button>
+            <button className="bg-yellow-500 text-white px-3 py-1 rounded" onClick={() => setShowEdit(true)}>Edit</button>
+            <button className="bg-red-600 text-white px-3 py-1 rounded" onClick={handleDelete}>Delete</button>
+          </>
+        )}
         <button className="bg-green-600 text-white px-3 py-1 rounded" onClick={() => setShowEmail(true)}>Kirim Email</button>
-        <button className="bg-yellow-500 text-white px-3 py-1 rounded" onClick={() => setShowEdit(true)}>Edit</button>
-        <button className="bg-red-600 text-white px-3 py-1 rounded" onClick={handleDelete}>Delete</button>
         <button className="bg-gray-700 text-white px-3 py-1 rounded" onClick={() => setShowRekap(true)}>Rekap</button>
         <button className="bg-purple-700 text-white px-3 py-1 rounded" onClick={handleDownloadPdf}>Download PDF</button>
         <button className="bg-indigo-600 text-white px-3 py-1 rounded" onClick={handleReviewPerpanjangan}>
           Review Perpanjangan
         </button>
-        <button className="bg-red-700 text-white px-3 py-1 rounded" onClick={handlePemecatan}>
-          Pemecatan
-        </button>
+        {isAdmin && (
+          <button className="bg-red-700 text-white px-3 py-1 rounded" onClick={handlePemecatan}>
+            Pemecatan
+          </button>
+        )}
       </div>
       {reviewResult && (
         <div className="mb-4 p-3 bg-gray-100 rounded border">

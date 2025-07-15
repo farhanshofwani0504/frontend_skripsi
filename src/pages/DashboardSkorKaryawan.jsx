@@ -37,6 +37,8 @@ export default function DashboardSkorKaryawan() {
 
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const isAdmin = user && user.role && user.role.toUpperCase() === "ADMIN";
 
   /* ---------- LOAD DATA ---------- */
   const fetchData = async () => {
@@ -144,37 +146,41 @@ export default function DashboardSkorKaryawan() {
       )}
 
       {/* ADD */}
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => setShowAdd(true)}
-          className="bg-green-600 text-white px-3 py-1 rounded"
-        >
-          + Tambah Karyawan
-        </button>
-      </div>
+      {isAdmin && (
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setShowAdd(true)}
+            className="bg-green-600 text-white px-3 py-1 rounded"
+          >
+            + Tambah Karyawan
+          </button>
+        </div>
+      )}
 
       {/* IMPORT BUTTONS */}
-      <div className="flex gap-2 mb-4">
-        <button
-          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-          onClick={() => handleOpenImport("karyawan")}
-        >
-          Upload CSV Karyawan
-        </button>
-        <button
-          className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded"
-          onClick={() => handleOpenImport("nilai")}
-        >
-          Upload CSV Nilai
-        </button>
-        <input
-          type="file"
-          accept=".csv"
-          ref={fileInputRef}
-          onChange={handleImport}
-          style={{ display: "none" }}
-        />
-      </div>
+      {isAdmin && (
+        <div className="flex gap-2 mb-4">
+          <button
+            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+            onClick={() => handleOpenImport("karyawan")}
+          >
+            Upload CSV Karyawan
+          </button>
+          <button
+            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded"
+            onClick={() => handleOpenImport("nilai")}
+          >
+            Upload CSV Nilai
+          </button>
+          <input
+            type="file"
+            accept=".csv"
+            ref={fileInputRef}
+            onChange={handleImport}
+            style={{ display: "none" }}
+          />
+        </div>
+      )}
       {/* IMPORT RESULT */}
       {importResult && (
         <div className="mb-4 p-3 bg-gray-100 rounded border">
@@ -232,7 +238,7 @@ export default function DashboardSkorKaryawan() {
       </footer>
 
       {/* MODALS */}
-      {showAdd && (
+      {isAdmin && showAdd && (
         <AddKaryawanModal
           token={token}
           onClose={() => setShowAdd(false)}
